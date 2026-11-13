@@ -1,0 +1,45 @@
+{
+  "schemaVersion" : 1,
+  "profiles" : [ {
+    "type" : "PROFILE",
+    "id" : 1,
+    "name" : "Анна Соколова",
+    "city" : "Новосибирск",
+    "birthYear" : 1998,
+    "description" : null,
+    "administratorId" : null,
+    "reason" : null
+  }, {
+    "type" : "PROFILE",
+    "id" : 2,
+    "name" : "Борис Волков",
+    "city" : "Омск",
+    "birthYear" : 1995,
+    "description" : null,
+    "administratorId" : null,
+    "reason" : null
+  }, {
+    "type" : "COMMUNITY",
+    "id" : 3,
+    "name" : "Клуб Java",
+    "city" : "Новосибирск",
+    "birthYear" : 2015,
+    "description" : "Сообщество любителей Java",
+    "administratorId" : 1,
+    "reason" : null
+  }, {
+    "type" : "DELETED",
+    "id" : 4,
+    "name" : "Удалённый пользователь",
+    "city" : "Томск",
+    "birthYear" : 1990,
+    "description" : null,
+    "administratorId" : null,
+    "reason" : "Нарушение правил"
+  } ],
+  "friendships" : [ {
+    "firstId" : 1,
+    "secondId" : 2,
+    "strength" : 7
+  } ]
+}

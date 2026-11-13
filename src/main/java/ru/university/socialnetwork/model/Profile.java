@@ -4,7 +4,9 @@ import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Profile {
+public class Profile implements java.io.Serializable {
+    @java.io.Serial
+    private static final long serialVersionUID = 1L;
     public static final int MIN_BIRTH_YEAR = 1900;
 
     private final int id;
@@ -54,6 +56,21 @@ public class Profile {
             errors.add(new ValidationIssue(ValidationIssue.Kind.EMPTY_FIELD,
                     field, "Поле «" + label + "» не должно быть пустым"));
         }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        Profile that = (Profile) other;
+        return id == that.id && birthYear == that.birthYear
+                && java.util.Objects.equals(name, that.name)
+                && java.util.Objects.equals(city, that.city);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(getClass(), id, name, city, birthYear);
     }
 
     @Override

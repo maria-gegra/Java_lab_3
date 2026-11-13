@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "ru.university"
-version = "1.1"
+version = "1.2"
 
 repositories { mavenCentral() }
 
@@ -21,6 +21,7 @@ javafx {
 application { mainClass.set("ru.university.socialnetwork.Main") }
 
 dependencies {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.0")
     testRuntimeOnly("org.testfx:openjfx-monocle:21.0.2")
@@ -36,6 +37,14 @@ sourceSets {
         compileClasspath += sourceSets["main"].output + configurations.runtimeClasspath.get()
         runtimeClasspath += output + compileClasspath
     }
+}
+
+tasks.register<JavaExec>("serializationBenchmark") {
+    group = "verification"
+    description = "Сравнение JSON и бинарной сериализации на 10000 записей (среднее по 5 прогонам)"
+    classpath = sourceSets["bench"].runtimeClasspath
+    mainClass.set("ru.university.socialnetwork.bench.SerializationBenchmark")
+    jvmArgs("-Xms256m", "-Xmx768m", "-Dfile.encoding=UTF-8", "-Dstdout.encoding=UTF-8")
 }
 
 tasks.register<JavaExec>("benchmark") {

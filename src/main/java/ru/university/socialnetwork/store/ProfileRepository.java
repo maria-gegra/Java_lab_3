@@ -11,6 +11,7 @@ import ru.university.socialnetwork.structure.Chain;
 import ru.university.socialnetwork.structure.GraphStore;
 import ru.university.socialnetwork.structure.SynchronizedGraph;
 import ru.university.socialnetwork.structure.Trace;
+import ru.university.socialnetwork.serialization.SocialNetworkData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +115,29 @@ public final class ProfileRepository {
     }
 
     public synchronized void clear() { graph.clear(); }
+
+    public synchronized SocialNetworkData exportData() {
+        return new SocialNetworkData(snapshot(), friendships());
+    }
+
+    public synchronized ProfileRepository importedCopy(SocialNetworkData data) {
+        if (data == null) throw new IllegalArgumentException("Данные для импорта не заданы");
+        ProfileRepository replacement = new ProfileRepository();
+        replacement.replaceAll(data.profiles());
+        for (Friendship friendship : data.friendships()) {
+            if (replacement.findById(friendship.getFirstId()) == null
+                    || replacement.findById(friendship.getSecondId()) == null) {
+                throw new IllegalArgumentException("Дружба " + friendship.getFirstId()
+                        + " — " + friendship.getSecondId() + " ссылается на отсутствующий профиль");
+            }
+            if (replacement.friendshipStrength(friendship.getFirstId(), friendship.getSecondId()) > 0) {
+                throw new IllegalArgumentException("Дублирующаяся дружба: "
+                        + friendship.getFirstId() + " — " + friendship.getSecondId());
+            }
+            replacement.addFriendship(friendship);
+        }
+        return replacement;
+    }
 
     public synchronized void addFriendship(Friendship friendship) {
         Objects.requireNonNull(friendship, "Дружба не задана");

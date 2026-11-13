@@ -25,6 +25,10 @@ import ru.university.socialnetwork.csv.CsvLoader;
 import ru.university.socialnetwork.csv.CsvSaver;
 import ru.university.socialnetwork.model.Editable;
 import ru.university.socialnetwork.model.Profile;
+import ru.university.socialnetwork.serialization.SerializationException;
+import ru.university.socialnetwork.serialization.Serializer;
+import ru.university.socialnetwork.serialization.Serializers;
+import ru.university.socialnetwork.serialization.SocialNetworkData;
 import ru.university.socialnetwork.store.ProfileRepository;
 import ru.university.socialnetwork.structure.Trace;
 
@@ -80,7 +84,13 @@ public class MainWindow extends Application {
         this.stage = stage;
         Button loadButton = new Button("Загрузить из CSV");
         Button saveButton = new Button("Сохранить в CSV");
+        Button exportButton = new Button("Экспорт…");
+        Button importButton = new Button("Импорт…");
         Button addButton = new Button("Добавить");
+        exportButton.setId("exportButton");
+        importButton.setId("importButton");
+        exportButton.disableProperty().bind(busy);
+        importButton.disableProperty().bind(busy);
         loadButton.disableProperty().bind(busy);
         saveButton.disableProperty().bind(busy);
         addButton.disableProperty().bind(busy);
@@ -91,6 +101,8 @@ public class MainWindow extends Application {
         removeButton.disableProperty().bind(busy.or(notEditable));
         loadButton.setOnAction(event -> chooseLoad());
         saveButton.setOnAction(event -> chooseSave());
+        exportButton.setOnAction(event -> chooseExport());
+        importButton.setOnAction(event -> chooseImport());
         addButton.setOnAction(event -> add());
         editButton.setOnAction(event -> edit());
         removeButton.setOnAction(event -> remove());
@@ -106,7 +118,8 @@ public class MainWindow extends Application {
         }
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox buttons = new HBox(GAP, loadButton, saveButton, addButton, editButton, removeButton,
+        HBox buttons = new HBox(GAP, loadButton, saveButton, exportButton, importButton,
+                addButton, editButton, removeButton,
                 spacer, progress, cancelButton);
         SplitPane split = new SplitPane(table, structureView);
         split.setDividerPositions(SPLIT_POSITION);
@@ -141,6 +154,76 @@ public class MainWindow extends Application {
         chooser.setInitialFileName("profiles.csv");
         File file = chooser.showSaveDialog(stage);
         if (file != null) saveFile(file.toPath());
+    }
+
+    private void chooseExport() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Экспорт данных");
+        chooser.setInitialFileName("social-network.json");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("JSON", "*.json"),
+                new FileChooser.ExtensionFilter("Бинарный формат", "*.bin"));
+        File file = chooser.showSaveDialog(stage);
+        if (file != null) exportFile(file.toPath());
+    }
+
+    private void chooseImport() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Импорт данных");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("JSON и бинарные файлы", "*.json", "*.bin"),
+                new FileChooser.ExtensionFilter("JSON", "*.json"),
+                new FileChooser.ExtensionFilter("Бинарный формат", "*.bin"));
+        File file = chooser.showOpenDialog(stage);
+        if (file == null || !workspace.confirmDiscard()) return;
+        importFile(file.toPath());
+    }
+
+    void exportFile(Path file) {
+        Serializer<SocialNetworkData> serializer;
+        try {
+            serializer = Serializers.forFile(file);
+        } catch (SerializationException e) {
+            GuiAlerts.show(stage, Alert.AlertType.ERROR, "Экспорт невозможен", e.getMessage());
+            return;
+        }
+        SocialNetworkData data = repository.exportData();
+        Task<Void> task = new Task<>() {
+            @Override protected Void call() throws Exception {
+                serializer.save(data, file);
+                return null;
+            }
+        };
+        runner.run(task, "Экспорт (" + serializer.format() + ")…", "Ошибка экспорта",
+                ignored -> status.setText("Экспортировано профилей: " + data.profiles().size()
+                        + ", дружб: " + data.friendships().size() + " (" + serializer.format() + ")"),
+                () -> { });
+    }
+
+    void importFile(Path file) {
+        Serializer<SocialNetworkData> serializer;
+        try {
+            serializer = Serializers.forFile(file);
+        } catch (SerializationException e) {
+            GuiAlerts.show(stage, Alert.AlertType.ERROR, "Импорт невозможен", e.getMessage());
+            return;
+        }
+        Task<ProfileRepository> task = new Task<>() {
+            @Override protected ProfileRepository call() throws Exception {
+                SocialNetworkData data = serializer.load(file);
+                updateProgress(1, 1);
+                return repository.importedCopy(data);
+            }
+        };
+        runner.run(task, "Импорт (" + serializer.format() + ")…", "Ошибка импорта", replacement -> {
+            repository = replacement;
+            dirty = false;
+            friendsDirty = false;
+            updateView();
+            updateTitle();
+            status.setText("Импортировано профилей: " + repository.size()
+                    + ", дружб: " + repository.friendshipCount());
+        }, () -> { });
     }
 
     void loadFile(Path file) {
@@ -242,7 +325,7 @@ public class MainWindow extends Application {
     private boolean unsaved() { return dirty || friendsDirty; }
     private void markDirty() { dirty = true; updateTitle(); }
     private void updateTitle() {
-        if (stage != null) stage.setTitle("Социальная сеть — лабораторная 2" + (unsaved() ? " *" : ""));
+        if (stage != null) stage.setTitle("Социальная сеть — лабораторная 3" + (unsaved() ? " *" : ""));
     }
 
     @Override

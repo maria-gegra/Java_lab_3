@@ -93,8 +93,8 @@ class MainWindowRemoveTest {
     }
 
     @Test
-    void windowTitleMentionsSecondLab() throws Exception {
+    void windowTitleMentionsThirdLab() throws Exception {
         withWindow((app, repository, table) ->
-                assertTrue(((Stage) field(app, "stage")).getTitle().contains("лабораторная 2")));
+                assertTrue(((Stage) field(app, "stage")).getTitle().contains("лабораторная 3")));
     }
 }

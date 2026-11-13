@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Community extends Profile implements Editable {
+    @java.io.Serial
+    private static final long serialVersionUID = 1L;
     private final String description;
     private final int administratorId;
 
@@ -29,6 +31,19 @@ public class Community extends Profile implements Editable {
                     "administratorId", "Сообщество не может быть собственным администратором"));
         }
         return List.copyOf(errors);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!super.equals(other)) return false;
+        Community that = (Community) other;
+        return administratorId == that.administratorId
+                && java.util.Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(super.hashCode(), description, administratorId);
     }
 
     @Override

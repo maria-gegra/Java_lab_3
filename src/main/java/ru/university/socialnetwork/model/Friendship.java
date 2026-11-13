@@ -1,6 +1,8 @@
 package ru.university.socialnetwork.model;
 
-public final class Friendship {
+public final class Friendship implements java.io.Serializable {
+    @java.io.Serial
+    private static final long serialVersionUID = 1L;
     private final int firstId;
     private final int secondId;
     private int strength;
@@ -26,6 +28,23 @@ public final class Friendship {
             throw new IllegalArgumentException("Сила связи должна быть положительной");
         }
         this.strength = strength;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (!(other instanceof Friendship that)) return false;
+        return firstId == that.firstId && secondId == that.secondId && strength == that.strength;
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(firstId, secondId, strength);
+    }
+
+    @Override
+    public String toString() {
+        return firstId + " — " + secondId + " (" + strength + ")";
     }
 
     public int getOtherId(int id) {
